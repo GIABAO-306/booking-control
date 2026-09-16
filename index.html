@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TNG Booking Control - Gmail Reader</title>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <style>
+    :root{--bg:#f5f7fb;--card:#fff;--text:#152033;--muted:#65758b;--primary:#0b57d0;--border:#d9e1ec;--ok:#0f9d58;--warn:#c5221f}
+    *{box-sizing:border-box}body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text)}
+    .wrap{max-width:1100px;margin:0 auto;padding:24px}.top{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:18px}.title{font-size:26px;font-weight:700}.sub{color:var(--muted);font-size:14px}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:16px;box-shadow:0 2px 8px rgba(20,40,80,.04)}
+    .grid{display:grid;grid-template-columns:1fr auto;gap:10px}.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}input{width:100%;padding:11px 12px;border:1px solid var(--border);border-radius:9px;font-size:14px}button{border:0;border-radius:9px;padding:11px 16px;font-weight:700;cursor:pointer;background:var(--primary);color:#fff}button.secondary{background:#eef3fb;color:var(--primary)}button:disabled{opacity:.55;cursor:not-allowed}
+    .status{padding:10px 12px;border-radius:9px;background:#eef3fb;color:#243b53;font-size:14px}.status.ok{background:#e7f5ec;color:#146c43}.status.err{background:#fdeceb;color:#9f2b26}
+    table{width:100%;border-collapse:collapse;margin-top:12px;font-size:14px}th,td{padding:10px;border-bottom:1px solid var(--border);text-align:left;vertical-align:top}th{background:#f7f9fc}.pill{display:inline-block;padding:3px 8px;border-radius:999px;background:#eef3fb;color:#38557a;font-size:12px}.muted{color:var(--muted)}
+    details{margin-top:6px}pre{white-space:pre-wrap;word-break:break-word;background:#f7f9fc;padding:10px;border-radius:8px;border:1px solid var(--border);max-height:220px;overflow:auto}
+    @media(max-width:700px){.grid{grid-template-columns:1fr}.top{align-items:flex-start;flex-direction:column}.title{font-size:22px}}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div>
+      <div class="title">TNG Booking Control</div>
+      <div class="sub">Bản thử nghiệm web thuần trình duyệt · đọc Gmail bằng OAuth · không cần cài phần mềm</div>
+    </div>
+    <span class="pill">Step A: Gmail Reader</span>
+  </div>
+
+  <div class="card">
+    <b>1. Nhập OAuth Client ID</b>
+    <div class="muted" style="margin:6px 0 10px">Chỉ cần Client ID, không dùng Client Secret. Trình duyệt sẽ lưu Client ID trên chính máy này.</div>
+    <div class="grid">
+      <input id="clientId" placeholder="Ví dụ: 1234567890-abc...apps.googleusercontent.com" autocomplete="off" />
+      <button id="saveClient">Lưu Client ID</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="row">
+      <button id="connectBtn">Kết nối Gmail</button>
+      <button id="readBtn" class="secondary" disabled>Đọc 3 email Booking/XNK mới nhất</button>
+      <button id="signoutBtn" class="secondary" disabled>Ngắt phiên</button>
+    </div>
+    <div id="status" class="status" style="margin-top:12px">Chưa kết nối Gmail.</div>
+  </div>
+
+  <div class="card">
+    <b>3 email mới nhất</b>
+    <div class="muted" style="margin-top:4px">Tìm trong 60 ngày gần nhất với các từ khóa Booking/BKG/CFS/CY cut off/EHD/ETD/container.</div>
+    <div id="results" class="muted" style="margin-top:12px">Chưa có dữ liệu.</div>
+  </div>
+</div>
+
+<script>
+(() => {
+  'use strict';
+  const SCOPES = 'https://www.googleapis.com/auth/gmail.readonly';
+  const QUERY = 'newer_than:60d -in:spam -in:trash {booking BKG CFS "CY cut off" EHD ETD container seal}';
+  let accessToken = null;
+  let tokenClient = null;
+
+  const $ = (id) => document.getElementById(id);
+  const clientIdInput = $('clientId');
+  const connectBtn = $('connectBtn');
+  const readBtn = $('readBtn');
+  const signoutBtn = $('signoutBtn');
+  const status = $('status');
+  const results = $('results');
+
+  clientIdInput.value = localStorage.getItem('tng_gmail_client_id') || '';
+
+  function setStatus(text, kind='') {
+    status.textContent = text;
+    status.className = 'status' + (kind ? ' ' + kind : '');
+  }
+
+  function esc(s='') {
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  function header(headers, name) {
+    const h = (headers || []).find(x => String(x.name).toLowerCase() === name.toLowerCase());
+    return h ? h.value : '';
+  }
+
+  function decodeBody(data) {
+    if (!data) return '';
+    try {
+      const normalized = data.replace(/-/g,'+').replace(/_/g,'/');
+      const bin = atob(normalized);
+      const bytes = Uint8Array.from(bin, c => c.charCodeAt(0));
+      return new TextDecoder('utf-8').decode(bytes);
+    } catch { return ''; }
+  }
+
+  function collectText(part) {
+    if (!part) return '';
+    let out = '';
+    if (part.mimeType === 'text/plain' && part.body && part.body.data) out += decodeBody(part.body.data) + '\n';
+    for (const p of (part.parts || [])) out += collectText(p);
+    return out.trim();
+  }
+
+  function collectAttachments(part, arr=[]) {
+    if (!part) return arr;
+    if (part.filename) arr.push(part.filename);
+    for (const p of (part.parts || [])) collectAttachments(p, arr);
+    return arr;
+  }
+
+  function extractBooking(text) {
+    const t = String(text || '');
+    const patterns = [
+      /\b(?:HANG|HPHD|SGN|ANF)[A-Z0-9_-]{5,}\b/gi,
+      /\b(?:booking|bkg)\s*(?:no\.?|#|number)?\s*[:\-]?\s*([A-Z0-9_-]{6,})\b/gi
+    ];
+    const found = new Set();
+    for (const re of patterns) {
+      let m; while ((m = re.exec(t)) !== null) found.add((m[1] || m[0]).toUpperCase());
+    }
+    return [...found].slice(0,5).join(', ');
+  }
+
+  async function gmailFetch(path) {
+    const r = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/' + path, {
+      headers: { Authorization: 'Bearer ' + accessToken }
+    });
+    if (!r.ok) {
+      const txt = await r.text();
+      throw new Error(`Gmail API ${r.status}: ${txt.slice(0,300)}`);
+    }
+    return r.json();
+  }
+
+  function initTokenClient() {
+    const clientId = clientIdInput.value.trim();
+    if (!clientId) throw new Error('Chưa nhập OAuth Client ID.');
+    if (!window.google || !google.accounts || !google.accounts.oauth2) throw new Error('Google Identity Services chưa tải xong. Thử lại sau vài giây.');
+    tokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: clientId,
+      scope: SCOPES,
+      callback: (resp) => {
+        if (resp.error) {
+          setStatus('Kết nối thất bại: ' + resp.error, 'err');
+          return;
+        }
+        accessToken = resp.access_token;
+        readBtn.disabled = false;
+        signoutBtn.disabled = false;
+        setStatus('Đã kết nối Gmail. Có thể đọc email.', 'ok');
+      }
+    });
+  }
+
+  $('saveClient').addEventListener('click', () => {
+    const v = clientIdInput.value.trim();
+    if (!v) return setStatus('Hãy nhập Client ID.', 'err');
+    localStorage.setItem('tng_gmail_client_id', v);
+    setStatus('Đã lưu Client ID trên trình duyệt.', 'ok');
+  });
+
+  connectBtn.addEventListener('click', () => {
+    try {
+      initTokenClient();
+      tokenClient.requestAccessToken({ prompt: 'consent' });
+    } catch (e) {
+      setStatus(e.message, 'err');
+    }
+  });
+
+  signoutBtn.addEventListener('click', () => {
+    if (accessToken && window.google?.accounts?.oauth2) google.accounts.oauth2.revoke(accessToken, () => {});
+    accessToken = null;
+    readBtn.disabled = true;
+    signoutBtn.disabled = true;
+    setStatus('Đã ngắt phiên Gmail.');
+  });
+
+  readBtn.addEventListener('click', async () => {
+    if (!accessToken) return setStatus('Chưa kết nối Gmail.', 'err');
+    readBtn.disabled = true;
+    setStatus('Đang đọc Gmail...');
+    results.textContent = 'Đang tải...';
+    try {
+      const list = await gmailFetch(`messages?q=${encodeURIComponent(QUERY)}&maxResults=20`);
+      const ids = (list.messages || []).map(x => x.id);
+      if (!ids.length) {
+        results.textContent = 'Không tìm thấy email phù hợp trong 60 ngày gần nhất.';
+        setStatus('Đã đọc Gmail nhưng chưa có mail phù hợp.', 'ok');
+        return;
+      }
+      const msgs = await Promise.all(ids.map(id => gmailFetch(`messages/${id}?format=full`)));
+      msgs.sort((a,b) => Number(b.internalDate||0) - Number(a.internalDate||0));
+      const top = msgs.slice(0,3);
+      const rows = top.map((m, i) => {
+        const h = m.payload?.headers || [];
+        const subject = header(h,'Subject');
+        const from = header(h,'From');
+        const date = header(h,'Date');
+        const body = collectText(m.payload) || m.snippet || '';
+        const atts = collectAttachments(m.payload, []);
+        const booking = extractBooking(subject + '\n' + body);
+        return `<tr>
+          <td>${i+1}</td>
+          <td><b>${esc(subject || '(Không tiêu đề)')}</b><br><span class="muted">${esc(from)}</span><br><span class="muted">${esc(date)}</span></td>
+          <td>${booking ? esc(booking) : '<span class="muted">Chưa nhận diện</span>'}</td>
+          <td>${atts.length ? esc(atts.join(', ')) : '<span class="muted">Không có</span>'}</td>
+          <td><details><summary>Xem nội dung</summary><pre>${esc(body.slice(0,5000))}</pre></details></td>
+        </tr>`;
+      }).join('');
+      results.innerHTML = `<table><thead><tr><th>#</th><th>Email</th><th>Booking nhận diện</th><th>Attachment</th><th>Nội dung</th></tr></thead><tbody>${rows}</tbody></table>`;
+      setStatus('Đã đọc thành công 3 email Booking/XNK mới nhất.', 'ok');
+    } catch (e) {
+      console.error(e);
+      results.textContent = 'Không đọc được Gmail.';
+      setStatus(e.message, 'err');
+    } finally {
+      readBtn.disabled = !accessToken;
+    }
+  });
+})();
+</script>
+</body>
+</html>
