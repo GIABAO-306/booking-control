@@ -1,224 +1,117 @@
 <!doctype html>
 <html lang="vi">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>TNG Booking Control - Gmail Reader</title>
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
-  <style>
-    :root{--bg:#f5f7fb;--card:#fff;--text:#152033;--muted:#65758b;--primary:#0b57d0;--border:#d9e1ec;--ok:#0f9d58;--warn:#c5221f}
-    *{box-sizing:border-box}body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text)}
-    .wrap{max-width:1100px;margin:0 auto;padding:24px}.top{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:18px}.title{font-size:26px;font-weight:700}.sub{color:var(--muted);font-size:14px}
-    .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:16px;box-shadow:0 2px 8px rgba(20,40,80,.04)}
-    .grid{display:grid;grid-template-columns:1fr auto;gap:10px}.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}input{width:100%;padding:11px 12px;border:1px solid var(--border);border-radius:9px;font-size:14px}button{border:0;border-radius:9px;padding:11px 16px;font-weight:700;cursor:pointer;background:var(--primary);color:#fff}button.secondary{background:#eef3fb;color:var(--primary)}button:disabled{opacity:.55;cursor:not-allowed}
-    .status{padding:10px 12px;border-radius:9px;background:#eef3fb;color:#243b53;font-size:14px}.status.ok{background:#e7f5ec;color:#146c43}.status.err{background:#fdeceb;color:#9f2b26}
-    table{width:100%;border-collapse:collapse;margin-top:12px;font-size:14px}th,td{padding:10px;border-bottom:1px solid var(--border);text-align:left;vertical-align:top}th{background:#f7f9fc}.pill{display:inline-block;padding:3px 8px;border-radius:999px;background:#eef3fb;color:#38557a;font-size:12px}.muted{color:var(--muted)}
-    details{margin-top:6px}pre{white-space:pre-wrap;word-break:break-word;background:#f7f9fc;padding:10px;border-radius:8px;border:1px solid var(--border);max-height:220px;overflow:auto}
-    @media(max-width:700px){.grid{grid-template-columns:1fr}.top{align-items:flex-start;flex-direction:column}.title{font-size:22px}}
-  </style>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>TNG Booking Control</title>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+:root{--bg:#f4f7fb;--card:#fff;--text:#172033;--muted:#66758a;--primary:#0b57d0;--border:#dbe3ee;--ok:#138a50;--warn:#b7791f;--danger:#c5221f;--nav:#0d2b52}
+*{box-sizing:border-box}body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text)}
+header{background:var(--nav);color:#fff;padding:16px 22px;position:sticky;top:0;z-index:20;box-shadow:0 2px 8px rgba(0,0,0,.12)}
+.header-row{max-width:1500px;margin:auto;display:flex;gap:16px;align-items:center;justify-content:space-between}.brand{font-size:24px;font-weight:800}.small{font-size:12px;color:#d7e4f3}
+nav{max-width:1500px;margin:10px auto 0;display:flex;gap:6px;flex-wrap:wrap}.tabbtn{background:transparent;border:1px solid rgba(255,255,255,.25);color:#fff;border-radius:9px;padding:9px 12px;cursor:pointer}.tabbtn.active{background:#fff;color:var(--nav);font-weight:700}
+main{max-width:1500px;margin:18px auto;padding:0 18px 40px}.tab{display:none}.tab.active{display:block}.grid{display:grid;gap:14px}.g4{grid-template-columns:repeat(4,minmax(0,1fr))}.g3{grid-template-columns:repeat(3,minmax(0,1fr))}.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;box-shadow:0 2px 8px rgba(20,40,80,.04);margin-bottom:14px}.kpi{font-size:28px;font-weight:800}.label{font-size:12px;color:var(--muted);margin-top:4px}.row{display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+button{border:0;border-radius:9px;padding:10px 14px;font-weight:700;cursor:pointer;background:var(--primary);color:white}button.secondary{background:#eef3fb;color:var(--primary)}button.warn{background:#fff4df;color:#8a5b00}button:disabled{opacity:.5;cursor:not-allowed}
+input,select,textarea{width:100%;padding:10px 11px;border:1px solid var(--border);border-radius:9px;background:white;font-size:14px}.field{display:grid;gap:5px}.field label{font-size:12px;color:var(--muted);font-weight:700}
+.status{padding:10px 12px;border-radius:9px;background:#eef3fb;color:#29425f;font-size:13px}.status.ok{background:#e7f5ec;color:#136b42}.status.err{background:#fdeceb;color:#9f2b26}.status.warn{background:#fff5df;color:#8b6200}
+.tablewrap{overflow:auto;max-height:66vh;border:1px solid var(--border);border-radius:10px}table{width:100%;border-collapse:collapse;font-size:13px;background:#fff}th,td{padding:9px;border-bottom:1px solid var(--border);text-align:left;vertical-align:top;white-space:nowrap}th{position:sticky;top:0;background:#f7f9fc;z-index:2}td.wrap{white-space:normal;min-width:220px}.pill{display:inline-block;padding:3px 8px;border-radius:999px;background:#eef3fb;color:#38557a;font-size:11px}.pill.ok{background:#e5f5ec;color:#146c43}.pill.warn{background:#fff4df;color:#8b6200}.pill.danger{background:#fdebea;color:#a52a24}.muted{color:var(--muted)}
+.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}.toolbar input{max-width:320px}.section-title{font-size:18px;font-weight:800;margin-bottom:10px}.heartbeat{font-family:Consolas,monospace;font-size:12px}.hidden{display:none!important}
+@media(max-width:1000px){.g4,.g3,.g2{grid-template-columns:1fr 1fr}}@media(max-width:650px){.g4,.g3,.g2{grid-template-columns:1fr}.brand{font-size:20px}}
+</style>
 </head>
 <body>
-<div class="wrap">
-  <div class="top">
-    <div>
-      <div class="title">TNG Booking Control</div>
-      <div class="sub">Bản thử nghiệm web thuần trình duyệt · đọc Gmail bằng OAuth · không cần cài phần mềm</div>
+<header>
+  <div class="header-row">
+    <div><div class="brand">TNG Booking Control</div><div class="small">Gmail → Container/CFS → History → Cảnh báo → Dashboard</div></div>
+    <div class="row"><span id="rolePill" class="pill">Chưa kết nối</span><span id="heartbeat" class="small heartbeat">--</span></div>
+  </div>
+  <nav>
+    <button class="tabbtn active" data-tab="dashboard">Dashboard</button>
+    <button class="tabbtn" data-tab="container">Container</button>
+    <button class="tabbtn" data-tab="cfs">CFS</button>
+    <button class="tabbtn" data-tab="mail">Mail Log</button>
+    <button class="tabbtn" data-tab="history">History</button>
+    <button class="tabbtn" data-tab="alerts">Cảnh báo</button>
+    <button class="tabbtn" data-tab="config">Cấu hình</button>
+  </nav>
+</header>
+<main>
+<section id="dashboard" class="tab active">
+  <div class="grid g4">
+    <div class="card"><div id="kpiCont" class="kpi">0</div><div class="label">Container</div></div>
+    <div class="card"><div id="kpiCfs" class="kpi">0</div><div class="label">CFS</div></div>
+    <div class="card"><div id="kpiAlerts" class="kpi">0</div><div class="label">Cảnh báo đang mở</div></div>
+    <div class="card"><div id="kpiMail" class="kpi">0</div><div class="label">Mail đã xử lý</div></div>
+  </div>
+  <div class="grid g2">
+    <div class="card"><div class="section-title">Trạng thái Container</div><div id="contStatus"></div></div>
+    <div class="card"><div class="section-title">Trạng thái CFS</div><div id="cfsStatus"></div></div>
+  </div>
+  <div class="card"><div class="section-title">Booking cần chú ý</div><div id="dashAlerts" class="muted">Chưa có dữ liệu.</div></div>
+</section>
+<section id="container" class="tab"><div class="card"><div class="toolbar"><input id="searchCont" placeholder="Tìm Booking/Container/Chi nhánh..."><button class="secondary" onclick="loadAll()">Làm mới</button></div><div id="contTable" class="tablewrap"></div></div></section>
+<section id="cfs" class="tab"><div class="card"><div class="toolbar"><input id="searchCfs" placeholder="Tìm Booking/Load ID/Chi nhánh..."><button class="secondary" onclick="loadAll()">Làm mới</button></div><div id="cfsTable" class="tablewrap"></div></div></section>
+<section id="mail" class="tab"><div class="card"><div class="toolbar"><button id="readNowBtn" disabled>Đọc mail mới ngay</button><button class="secondary" onclick="loadAll()">Làm mới</button></div><div id="mailTable" class="tablewrap"></div></div></section>
+<section id="history" class="tab"><div class="card"><div class="toolbar"><input id="searchHistory" placeholder="Tìm Booking/Event..."><button class="secondary" onclick="loadAll()">Làm mới</button></div><div id="historyTable" class="tablewrap"></div></div></section>
+<section id="alerts" class="tab"><div class="card"><div class="section-title">Cảnh báo tự động</div><div class="muted" style="margin-bottom:10px">Sinh từ dữ liệu Container/CFS: gần cut-off nhưng thiếu kế hoạch, thiếu HVC xác nhận, thiếu cont/seal hoặc chưa hoàn thành.</div><div id="alertTable" class="tablewrap"></div></div></section>
+<section id="config" class="tab">
+  <div class="grid g2">
+    <div class="card"><div class="section-title">Kết nối Google</div>
+      <div class="field"><label>OAuth Client ID</label><input id="clientId" autocomplete="off"></div>
+      <div class="field" style="margin-top:9px"><label>Google Sheet ID</label><input id="sheetId"></div>
+      <div class="row" style="margin-top:12px"><button id="saveCfg">Lưu cấu hình</button><button id="viewerBtn" class="secondary">Kết nối Viewer</button><button id="runnerBtn">Kết nối Runner</button><button id="signoutBtn" class="secondary" disabled>Ngắt phiên</button></div>
+      <div id="authStatus" class="status" style="margin-top:12px">Chưa kết nối.</div>
     </div>
-    <span class="pill">Step A: Gmail Reader</span>
-  </div>
-
-  <div class="card">
-    <b>1. Nhập OAuth Client ID</b>
-    <div class="muted" style="margin:6px 0 10px">Chỉ cần Client ID, không dùng Client Secret. Trình duyệt sẽ lưu Client ID trên chính máy này.</div>
-    <div class="grid">
-      <input id="clientId" placeholder="Ví dụ: 1234567890-abc...apps.googleusercontent.com" autocomplete="off" />
-      <button id="saveClient">Lưu Client ID</button>
+    <div class="card"><div class="section-title">Runner 24/7</div>
+      <div class="field"><label>Chu kỳ kiểm tra mail (giây)</label><input id="pollSec" type="number" min="30" max="3600" value="60"></div>
+      <div class="row" style="margin-top:12px"><button id="startRunnerBtn" disabled>Bật Auto Runner</button><button id="stopRunnerBtn" class="secondary" disabled>Tắt Runner</button></div>
+      <div id="runnerStatus" class="status" style="margin-top:12px">Runner chưa bật.</div>
+      <p class="muted" style="font-size:12px">Không cần cài phần mềm. Để chạy liên tục, ít nhất 1 trong tối đa 3 máy Runner phải bật máy và giữ tab web này mở. Hệ thống chống xử lý trùng bằng Mail ID trong 05_MAIL_LOG.</p>
     </div>
   </div>
-
-  <div class="card">
-    <div class="row">
-      <button id="connectBtn">Kết nối Gmail</button>
-      <button id="readBtn" class="secondary" disabled>Đọc 3 email Booking/XNK mới nhất</button>
-      <button id="signoutBtn" class="secondary" disabled>Ngắt phiên</button>
-    </div>
-    <div id="status" class="status" style="margin-top:12px">Chưa kết nối Gmail.</div>
-  </div>
-
-  <div class="card">
-    <b>3 email mới nhất</b>
-    <div class="muted" style="margin-top:4px">Tìm trong 60 ngày gần nhất với các từ khóa Booking/BKG/CFS/CY cut off/EHD/ETD/container.</div>
-    <div id="results" class="muted" style="margin-top:12px">Chưa có dữ liệu.</div>
-  </div>
-</div>
-
+  <div class="card"><div class="section-title">Quy tắc nghiệp vụ đang dùng</div><div class="grid g3"><div><b>Container</b><div class="muted">Khóa: Booking + HC/DC. Không ghi đè Ghi chú/ĐG/Final/Ngày bốc thực tế/Ngày tờ khai.</div></div><div><b>CFS</b><div class="muted">Khóa: Booking + Load ID. Mail mới nhất được ưu tiên cho thông tin điều hành.</div></div><div><b>History</b><div class="muted">Append-only. Mỗi mail mới được ghi Mail Log và History.</div></div></div></div>
+</section>
+</main>
 <script>
-(() => {
-  'use strict';
-  const SCOPES = 'https://www.googleapis.com/auth/gmail.readonly';
-  const QUERY = 'newer_than:60d -in:spam -in:trash {booking BKG CFS "CY cut off" EHD ETD container seal}';
-  let accessToken = null;
-  let tokenClient = null;
-
-  const $ = (id) => document.getElementById(id);
-  const clientIdInput = $('clientId');
-  const connectBtn = $('connectBtn');
-  const readBtn = $('readBtn');
-  const signoutBtn = $('signoutBtn');
-  const status = $('status');
-  const results = $('results');
-
-  clientIdInput.value = localStorage.getItem('tng_gmail_client_id') || '';
-
-  function setStatus(text, kind='') {
-    status.textContent = text;
-    status.className = 'status' + (kind ? ' ' + kind : '');
-  }
-
-  function esc(s='') {
-    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  }
-
-  function header(headers, name) {
-    const h = (headers || []).find(x => String(x.name).toLowerCase() === name.toLowerCase());
-    return h ? h.value : '';
-  }
-
-  function decodeBody(data) {
-    if (!data) return '';
-    try {
-      const normalized = data.replace(/-/g,'+').replace(/_/g,'/');
-      const bin = atob(normalized);
-      const bytes = Uint8Array.from(bin, c => c.charCodeAt(0));
-      return new TextDecoder('utf-8').decode(bytes);
-    } catch { return ''; }
-  }
-
-  function collectText(part) {
-    if (!part) return '';
-    let out = '';
-    if (part.mimeType === 'text/plain' && part.body && part.body.data) out += decodeBody(part.body.data) + '\n';
-    for (const p of (part.parts || [])) out += collectText(p);
-    return out.trim();
-  }
-
-  function collectAttachments(part, arr=[]) {
-    if (!part) return arr;
-    if (part.filename) arr.push(part.filename);
-    for (const p of (part.parts || [])) collectAttachments(p, arr);
-    return arr;
-  }
-
-  function extractBooking(text) {
-    const t = String(text || '');
-    const patterns = [
-      /\b(?:HANG|HPHD|SGN|ANF)[A-Z0-9_-]{5,}\b/gi,
-      /\b(?:booking|bkg)\s*(?:no\.?|#|number)?\s*[:\-]?\s*([A-Z0-9_-]{6,})\b/gi
-    ];
-    const found = new Set();
-    for (const re of patterns) {
-      let m; while ((m = re.exec(t)) !== null) found.add((m[1] || m[0]).toUpperCase());
-    }
-    return [...found].slice(0,5).join(', ');
-  }
-
-  async function gmailFetch(path) {
-    const r = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/' + path, {
-      headers: { Authorization: 'Bearer ' + accessToken }
-    });
-    if (!r.ok) {
-      const txt = await r.text();
-      throw new Error(`Gmail API ${r.status}: ${txt.slice(0,300)}`);
-    }
-    return r.json();
-  }
-
-  function initTokenClient() {
-    const clientId = clientIdInput.value.trim();
-    if (!clientId) throw new Error('Chưa nhập OAuth Client ID.');
-    if (!window.google || !google.accounts || !google.accounts.oauth2) throw new Error('Google Identity Services chưa tải xong. Thử lại sau vài giây.');
-    tokenClient = google.accounts.oauth2.initTokenClient({
-      client_id: clientId,
-      scope: SCOPES,
-      callback: (resp) => {
-        if (resp.error) {
-          setStatus('Kết nối thất bại: ' + resp.error, 'err');
-          return;
-        }
-        accessToken = resp.access_token;
-        readBtn.disabled = false;
-        signoutBtn.disabled = false;
-        setStatus('Đã kết nối Gmail. Có thể đọc email.', 'ok');
-      }
-    });
-  }
-
-  $('saveClient').addEventListener('click', () => {
-    const v = clientIdInput.value.trim();
-    if (!v) return setStatus('Hãy nhập Client ID.', 'err');
-    localStorage.setItem('tng_gmail_client_id', v);
-    setStatus('Đã lưu Client ID trên trình duyệt.', 'ok');
-  });
-
-  connectBtn.addEventListener('click', () => {
-    try {
-      initTokenClient();
-      tokenClient.requestAccessToken({ prompt: 'consent' });
-    } catch (e) {
-      setStatus(e.message, 'err');
-    }
-  });
-
-  signoutBtn.addEventListener('click', () => {
-    if (accessToken && window.google?.accounts?.oauth2) google.accounts.oauth2.revoke(accessToken, () => {});
-    accessToken = null;
-    readBtn.disabled = true;
-    signoutBtn.disabled = true;
-    setStatus('Đã ngắt phiên Gmail.');
-  });
-
-  readBtn.addEventListener('click', async () => {
-    if (!accessToken) return setStatus('Chưa kết nối Gmail.', 'err');
-    readBtn.disabled = true;
-    setStatus('Đang đọc Gmail...');
-    results.textContent = 'Đang tải...';
-    try {
-      const list = await gmailFetch(`messages?q=${encodeURIComponent(QUERY)}&maxResults=20`);
-      const ids = (list.messages || []).map(x => x.id);
-      if (!ids.length) {
-        results.textContent = 'Không tìm thấy email phù hợp trong 60 ngày gần nhất.';
-        setStatus('Đã đọc Gmail nhưng chưa có mail phù hợp.', 'ok');
-        return;
-      }
-      const msgs = await Promise.all(ids.map(id => gmailFetch(`messages/${id}?format=full`)));
-      msgs.sort((a,b) => Number(b.internalDate||0) - Number(a.internalDate||0));
-      const top = msgs.slice(0,3);
-      const rows = top.map((m, i) => {
-        const h = m.payload?.headers || [];
-        const subject = header(h,'Subject');
-        const from = header(h,'From');
-        const date = header(h,'Date');
-        const body = collectText(m.payload) || m.snippet || '';
-        const atts = collectAttachments(m.payload, []);
-        const booking = extractBooking(subject + '\n' + body);
-        return `<tr>
-          <td>${i+1}</td>
-          <td><b>${esc(subject || '(Không tiêu đề)')}</b><br><span class="muted">${esc(from)}</span><br><span class="muted">${esc(date)}</span></td>
-          <td>${booking ? esc(booking) : '<span class="muted">Chưa nhận diện</span>'}</td>
-          <td>${atts.length ? esc(atts.join(', ')) : '<span class="muted">Không có</span>'}</td>
-          <td><details><summary>Xem nội dung</summary><pre>${esc(body.slice(0,5000))}</pre></details></td>
-        </tr>`;
-      }).join('');
-      results.innerHTML = `<table><thead><tr><th>#</th><th>Email</th><th>Booking nhận diện</th><th>Attachment</th><th>Nội dung</th></tr></thead><tbody>${rows}</tbody></table>`;
-      setStatus('Đã đọc thành công 3 email Booking/XNK mới nhất.', 'ok');
-    } catch (e) {
-      console.error(e);
-      results.textContent = 'Không đọc được Gmail.';
-      setStatus(e.message, 'err');
-    } finally {
-      readBtn.disabled = !accessToken;
-    }
-  });
+(()=>{
+'use strict';
+const DEFAULT_SHEET='1hbz9RWT6Vhi0mtwzhz2996otEzKddcaQ-VCpUC_38iM';
+const VIEW_SCOPE='https://www.googleapis.com/auth/spreadsheets.readonly';
+const RUN_SCOPE='https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/gmail.send';
+const GMAIL_QUERY='newer_than:7d -in:spam -in:trash {booking BKG CFS "CY cut off" EHD ETD container seal HC DC TMPU}';
+const $=id=>document.getElementById(id);let token=null,tokenClient=null,role='',runnerTimer=null,cache={cont:[],cfs:[],mail:[],hist:[]};
+const sheets={cont:'01_CONTAINER!A1:AH2000',cfs:'02_CFS!A1:AI2000',mail:'05_MAIL_LOG!A1:L5000',hist:'04_HISTORY!A1:N5000'};
+$('clientId').value=localStorage.getItem('tng_client_id')||'';$('sheetId').value=localStorage.getItem('tng_sheet_id')||DEFAULT_SHEET;$('pollSec').value=localStorage.getItem('tng_poll_sec')||'60';
+function esc(s=''){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function setStatus(id,text,kind=''){const e=$(id);e.textContent=text;e.className='status'+(kind?' '+kind:'')}
+function header(h,n){const x=(h||[]).find(v=>String(v.name).toLowerCase()===n.toLowerCase());return x?x.value:''}
+function decode(data){if(!data)return'';try{const s=data.replace(/-/g,'+').replace(/_/g,'/');const b=atob(s);return new TextDecoder().decode(Uint8Array.from(b,c=>c.charCodeAt(0)))}catch{return''}}
+function collectText(p){if(!p)return'';let o='';if((p.mimeType==='text/plain'||p.mimeType==='text/html')&&p.body?.data)o+=decode(p.body.data)+'\n';for(const q of(p.parts||[]))o+=collectText(q);return o.replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim()}
+function collectAtt(p,a=[]){if(!p)return a;if(p.filename)a.push(p.filename);for(const q of(p.parts||[]))collectAtt(q,a);return a}
+function cfg(){return{client:$('clientId').value.trim(),sheet:$('sheetId').value.trim()}}
+function initToken(scope,mode){const c=cfg();if(!c.client)throw Error('Chưa có Client ID');if(!window.google?.accounts?.oauth2)throw Error('Google Identity chưa sẵn sàng');role=mode;tokenClient=google.accounts.oauth2.initTokenClient({client_id:c.client,scope,include_granted_scopes:true,callback:r=>{if(r.error){setStatus('authStatus','Kết nối thất bại: '+r.error,'err');return}token=r.access_token;$('signoutBtn').disabled=false;$('rolePill').textContent=mode==='runner'?'RUNNER':'VIEWER';$('rolePill').className='pill ok';setStatus('authStatus','Đã kết nối '+mode.toUpperCase()+'.','ok');$('readNowBtn').disabled=mode!=='runner';$('startRunnerBtn').disabled=mode!=='runner';loadAll();}});tokenClient.requestAccessToken({prompt:'consent'})}
+async function api(url,opt={}){opt.headers=Object.assign({},opt.headers||{},{Authorization:'Bearer '+token});const r=await fetch(url,opt);if(r.status===401&&role&&tokenClient){setStatus('authStatus','Phiên Google hết hạn. Hãy bấm Kết nối lại.','warn');throw Error('Phiên OAuth hết hạn')}if(!r.ok)throw Error((await r.text()).slice(0,350));return r.status===204?{}:r.json()}
+async function sheetGet(range){return api(`https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(cfg().sheet)}/values/${encodeURIComponent(range)}?majorDimension=ROWS`)}
+async function sheetAppend(range,values){return api(`https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(cfg().sheet)}/values/${encodeURIComponent(range)}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({values})})}
+async function sheetBatch(data){return api(`https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(cfg().sheet)}/values:batchUpdate`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({valueInputOption:'USER_ENTERED',data})})}
+async function gmail(path){return api('https://gmail.googleapis.com/gmail/v1/users/me/'+path)}
+function tabular(rows,filter=''){if(!rows?.length)return'<div class="muted" style="padding:12px">Chưa có dữ liệu.</div>';const h=rows[0],q=filter.trim().toLowerCase(),body=rows.slice(1).filter(r=>!q||r.join(' ').toLowerCase().includes(q));return'<table><thead><tr>'+h.map(x=>`<th>${esc(x)}</th>`).join('')+'</tr></thead><tbody>'+body.map(r=>'<tr>'+h.map((_,i)=>`<td${i===1?' class="wrap"':''}>${esc(r[i]??'')}</td>`).join('')+'</tr>').join('')+'</tbody></table>'}
+function statusSummary(rows,colName){if(!rows?.length)return'';const h=rows[0],i=h.indexOf(colName),m={};rows.slice(1).forEach(r=>{const k=r[i]||'(Trống)';m[k]=(m[k]||0)+1});return Object.entries(m).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<div class="row" style="justify-content:space-between;padding:6px 0;border-bottom:1px solid #edf1f5"><span>${esc(k)}</span><b>${v}</b></div>`).join('')}
+function dateVal(s){const d=new Date(s);return isNaN(d)?null:d}
+function computeAlerts(){const out=[];const now=new Date();function add(rows,mode){if(!rows?.length)return;const h=rows[0];const idx=n=>h.indexOf(n);rows.slice(1).forEach(r=>{const bk=r[idx('Booking No.')]||'';if(!bk)return;const status=r[idx('Trạng thái quy trình')]||'';const cutoff=r[idx(mode==='CONTAINER'?'CY Cut-off':'CFS Cut-off')]||'';const plan=r[idx(mode==='CONTAINER'?'Ngày KH đóng':'Ngày KH bốc xe')]||'';const hv=r[idx('HVC xác nhận')]||'';const cont=mode==='CONTAINER'?(r[idx('Số Container')]||''):'';const seal=mode==='CONTAINER'?(r[idx('Seal')]||''):'';const d=dateVal(cutoff);const hrs=d?(d-now)/36e5:null;let reason='';let sev='';if(d&&hrs<24&&hrs>-12&&!plan){reason='Còn <24h đến Cut-off nhưng chưa có kế hoạch';sev='danger'}else if(d&&hrs<24&&hrs>-12&&!hv){reason='Còn <24h đến Cut-off nhưng HVC chưa xác nhận';sev='danger'}else if(mode==='CONTAINER'&&d&&hrs<36&&hrs>-12&&(!cont||!seal)){reason='Gần Cut-off nhưng thiếu Container/Seal';sev='warn'}else if(/RỦI RO|CẢNH BÁO/i.test(r[idx('Cảnh báo')]||'')){reason=r[idx('Cảnh báo')];sev='warn'}if(reason)out.push({mode,bk,cutoff,status,reason,sev})})}add(cache.cont,'CONTAINER');add(cache.cfs,'CFS');return out}
+function render(){ $('contTable').innerHTML=tabular(cache.cont,$('searchCont').value);$('cfsTable').innerHTML=tabular(cache.cfs,$('searchCfs').value);$('mailTable').innerHTML=tabular(cache.mail);$('historyTable').innerHTML=tabular(cache.hist,$('searchHistory').value);$('kpiCont').textContent=Math.max(0,(cache.cont?.length||1)-2);$('kpiCfs').textContent=Math.max(0,(cache.cfs?.length||1)-2);$('kpiMail').textContent=Math.max(0,(cache.mail?.length||1)-1);$('contStatus').innerHTML=statusSummary(cache.cont,'Trạng thái quy trình');$('cfsStatus').innerHTML=statusSummary(cache.cfs,'Trạng thái quy trình');const a=computeAlerts();$('kpiAlerts').textContent=a.length;const at='<table><thead><tr><th>Mức</th><th>Mode</th><th>Booking</th><th>Cut-off</th><th>Trạng thái</th><th>Nội dung</th></tr></thead><tbody>'+a.map(x=>`<tr><td><span class="pill ${x.sev}">${x.sev==='danger'?'NGUY HIỂM':'CẢNH BÁO'}</span></td><td>${x.mode}</td><td>${esc(x.bk)}</td><td>${esc(x.cutoff)}</td><td>${esc(x.status)}</td><td>${esc(x.reason)}</td></tr>`).join('')+'</tbody></table>';$('alertTable').innerHTML=a.length?at:'<div class="muted" style="padding:12px">Chưa có cảnh báo.</div>';$('dashAlerts').innerHTML=a.length?a.slice(0,8).map(x=>`<div style="padding:7px 0;border-bottom:1px solid #edf1f5"><b>${esc(x.bk)}</b> · ${x.mode} · ${esc(x.reason)}</div>`).join(''):'Không có cảnh báo đang mở.'}
+window.loadAll=async function(){if(!token)return;try{setStatus('authStatus','Đang tải dữ liệu Google Sheet...');const [a,b,c,d]=await Promise.all([sheetGet(sheets.cont),sheetGet(sheets.cfs),sheetGet(sheets.mail),sheetGet(sheets.hist)]);cache.cont=a.values||[];cache.cfs=b.values||[];cache.mail=c.values||[];cache.hist=d.values||[];render();setStatus('authStatus','Đã đồng bộ dữ liệu Sheet.','ok')}catch(e){setStatus('authStatus','Không đọc được Sheet: '+e.message,'err')}};
+function parseMail(m){const h=m.payload?.headers||[],subject=header(h,'Subject'),from=header(h,'From'),date=header(h,'Date'),body=collectText(m.payload)||m.snippet||'',txt=(subject+' '+body).replace(/\s+/g,' '),atts=collectAtt(m.payload,[]);const bookings=[...new Set((txt.match(/\b(?:HANG|HPHD|SGN|ANF)[A-Z0-9_-]{5,}\b/gi)||[]).map(x=>x.toUpperCase()))];const b2=[...txt.matchAll(/\b(?:booking|bkg)\s*(?:no\.?|#|number)?\s*[:\-]?\s*([A-Z0-9_-]{6,})\b/gi)].map(x=>x[1].toUpperCase());b2.forEach(x=>bookings.push(x));const load=(txt.match(/\bTMPU\d+_\d+\b/i)||[])[0]||'';const cont=(txt.match(/\b[A-Z]{4}\d{7}\b/)||[])[0]||'';const seal=(txt.match(/\bseal\s*[:#-]?\s*([A-Z0-9-]{5,})/i)||[])[1]||'';const hcM=txt.match(/\b(HC|DC)\s*[-:]?\s*(\d{1,3})\b/i);const hc=hcM?hcM[1].toUpperCase()+hcM[2]:'';const mode=/\bCFS\b/i.test(txt)||load?'CFS':'CONTAINER';const customer=/DECA|DECATHLON/i.test(txt)?'Decathlon':'';const carrier=/ECOTRUCK/i.test(txt)?'ECOTRUCK':(/TNT\s*LOG/i.test(txt)?'TNT LOGS':'');const ehd=(txt.match(/\bEHD\s*[:\-]?\s*([0-3]?\d[\.\/-][01]?\d[\.\/-](?:20)?\d{2}|[A-Za-z]{3}[\s-]\d{1,2}[\s-]20\d{2})/i)||[])[1]||'';const etd=(txt.match(/\bETD\s*[:\-]?\s*([0-3]?\d[\.\/-][01]?\d[\.\/-](?:20)?\d{2}|[A-Za-z]{3}[\s-]\d{1,2}[\s-]20\d{2})/i)||[])[1]||'';const cutoff=(txt.match(/\b(?:CY|CFS)?\s*CUT[- ]?OFF\s*[:\-]?\s*([^,;]{5,32})/i)||[])[1]||'';return{id:m.id,thread:m.threadId,subject,from,date,body,atts,bookings:[...new Set(bookings)],load,cont,seal,hc,mode,customer,carrier,ehd,etd,cutoff}}
+function mailIds(){if(!cache.mail?.length)return new Set();return new Set(cache.mail.slice(1).map(r=>r[0]).filter(Boolean))}
+async function updateBooking(p){const bk=p.bookings[0]||'';if(!bk)return;const now=new Date().toLocaleString('vi-VN');if(p.mode==='CFS'){const rows=cache.cfs||[],h=rows[0]||[],bi=h.indexOf('Booking No.'),li=h.indexOf('Load ID');let ri=rows.findIndex((r,i)=>i>1&&r[bi]===bk&&(p.load?r[li]===p.load:true));if(ri<0){const r=new Array(35).fill('');r[1]=bk;r[2]=p.load;r[6]=p.customer;r[8]=p.ehd;r[9]=p.cutoff;r[10]=p.etd;r[26]='BOOKED';r[32]=now;r[33]=(p.from.match(/<([^>]+)>/)||[])[1]||p.from;r[34]=p.from.split('<')[0].replace(/["']/g,'').trim();await sheetAppend('02_CFS!A:AI',[r])}else{const row=ri+1,data=[];const set=(col,val)=>{if(val)data.push({range:`02_CFS!${col}${row}`,values:[[val]]})};set('G',p.customer);set('I',p.ehd);set('J',p.cutoff);set('K',p.etd);set('AG',now);if(data.length)await sheetBatch(data)}}else{const rows=cache.cont||[],h=rows[0]||[],bi=h.indexOf('Booking No.'),hi=h.indexOf('HC');let ri=rows.findIndex((r,i)=>i>1&&r[bi]===bk&&(p.hc?r[hi]===p.hc:true));if(ri<0){const r=new Array(34).fill('');r[1]=bk;r[2]=p.hc;r[6]=p.customer;r[8]=p.ehd;r[10]=p.cutoff;r[11]=p.etd;r[20]=p.cont;r[21]=p.seal;r[22]=p.carrier;r[25]=p.cont&&p.seal?'ĐÃ CẤP CONT/SEAL':'BOOKED';r[31]=now;r[32]=(p.from.match(/<([^>]+)>/)||[])[1]||p.from;r[33]=p.from.split('<')[0].replace(/["']/g,'').trim();await sheetAppend('01_CONTAINER!A:AH',[r])}else{const row=ri+1,data=[];const set=(col,val)=>{if(val)data.push({range:`01_CONTAINER!${col}${row}`,values:[[val]]})};set('G',p.customer);set('I',p.ehd);set('K',p.cutoff);set('L',p.etd);set('U',p.cont);set('V',p.seal);set('W',p.carrier);set('AF',now);if(p.cont&&p.seal)set('Z','ĐÃ CẤP CONT/SEAL');if(data.length)await sheetBatch(data)}}}
+async function processMail(p){const now=new Date().toLocaleString('vi-VN');const sender=(p.from.match(/<([^>]+)>/)||[])[1]||p.from;await updateBooking(p);await sheetAppend('05_MAIL_LOG!A:L',[[p.id,p.thread,p.date,p.from.split('<')[0].replace(/["']/g,'').trim(),sender,'AUTO_RUNNER',p.bookings.join(', '),p.mode+'_MAIL',p.subject,p.atts.join(', '),'Có',now]]);await sheetAppend('04_HISTORY!A:N',[[`HIST-${Date.now()}`,p.bookings[0]||'',p.mode==='CFS'?p.load:p.hc,p.mode,'MAIL_IMPORTED','Email','',p.subject,p.date,p.from.split('<')[0].trim(),'AUTO_RUNNER',p.atts.join(', '),p.id,'Tự động xử lý từ Gmail']])}
+async function pollGmail(manual=false){if(role!=='runner'||!token)return;try{setStatus('runnerStatus','Đang kiểm tra Gmail...');await loadAll();const done=mailIds(),list=await gmail(`messages?q=${encodeURIComponent(GMAIL_QUERY)}&maxResults=30`),ids=(list.messages||[]).map(x=>x.id).filter(id=>!done.has(id));if(!ids.length){setStatus('runnerStatus','Không có mail mới. Lần kiểm tra: '+new Date().toLocaleTimeString('vi-VN'),'ok');$('heartbeat').textContent='OK '+new Date().toLocaleTimeString('vi-VN');return}const msgs=await Promise.all(ids.slice(0,10).map(id=>gmail(`messages/${id}?format=full`)));msgs.sort((a,b)=>Number(a.internalDate)-Number(b.internalDate));let n=0;for(const m of msgs){const p=parseMail(m);await processMail(p);n++}await loadAll();setStatus('runnerStatus',`Đã xử lý ${n} mail mới. ${new Date().toLocaleTimeString('vi-VN')}`,'ok');$('heartbeat').textContent='RUN '+new Date().toLocaleTimeString('vi-VN')}catch(e){setStatus('runnerStatus','Runner lỗi: '+e.message,'err');$('heartbeat').textContent='ERR'}}
+function startRunner(){if(role!=='runner')return;stopRunner();const s=Math.max(30,Number($('pollSec').value)||60);localStorage.setItem('tng_poll_sec',s);runnerTimer=setInterval(()=>pollGmail(false),s*1000);$('startRunnerBtn').disabled=true;$('stopRunnerBtn').disabled=false;setStatus('runnerStatus',`Runner đang chạy mỗi ${s} giây. Giữ tab này mở.`,'ok');pollGmail(true)}
+function stopRunner(){if(runnerTimer)clearInterval(runnerTimer);runnerTimer=null;$('stopRunnerBtn').disabled=true;$('startRunnerBtn').disabled=role!=='runner';setStatus('runnerStatus','Runner đã tắt.','warn')}
+$('saveCfg').onclick=()=>{localStorage.setItem('tng_client_id',$('clientId').value.trim());localStorage.setItem('tng_sheet_id',$('sheetId').value.trim());localStorage.setItem('tng_poll_sec',$('pollSec').value);setStatus('authStatus','Đã lưu cấu hình trên trình duyệt.','ok')};$('viewerBtn').onclick=()=>{try{initToken(VIEW_SCOPE,'viewer')}catch(e){setStatus('authStatus',e.message,'err')}};$('runnerBtn').onclick=()=>{try{initToken(RUN_SCOPE,'runner')}catch(e){setStatus('authStatus',e.message,'err')}};$('signoutBtn').onclick=()=>{stopRunner();if(token)google.accounts.oauth2.revoke(token,()=>{});token=null;role='';$('rolePill').textContent='Chưa kết nối';$('rolePill').className='pill';$('readNowBtn').disabled=true;$('startRunnerBtn').disabled=true;$('signoutBtn').disabled=true;setStatus('authStatus','Đã ngắt phiên.')} ;$('startRunnerBtn').onclick=startRunner;$('stopRunnerBtn').onclick=stopRunner;$('readNowBtn').onclick=()=>pollGmail(true);$('searchCont').oninput=render;$('searchCfs').oninput=render;$('searchHistory').oninput=render;
+document.querySelectorAll('.tabbtn').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tabbtn').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));b.classList.add('active');$(b.dataset.tab).classList.add('active')});
 })();
 </script>
 </body>
